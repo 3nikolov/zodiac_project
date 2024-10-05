@@ -1,0 +1,154 @@
+---
+title: 'Final Project: PSYC 301, Part 1: Data Cleaning'
+author: "Sophie Nikolov"
+date: '2023-02-17'
+output: github_document
+---
+
+## Introduction
+
+This is the first part of my final project. As this portion of the project involves data cleaning, there will not be much written description of what is being done. That will be for the second part of the project, the analysis itself, where the actual paper portion of this project is written.  
+
+The recoding is done mostly in base R style as opposed to the tidyverse. I made this choice because I reasoned that my dataset of 81 was small enough for me to recode what I needed individually, to ensure absolutely everything was accounted for line by line. 
+
+## Read it all in, load libraries
+```{r setup, include=FALSE}
+zodiac <- read.csv("./zodiac_modify.csv")
+library(tidyverse)
+library(stringr)
+library(rlang)
+```
+
+## Recoding column names
+```{r}
+colnames(zodiac)[colnames(zodiac) == "Timestamp"] <- "Time"
+colnames(zodiac)[colnames(zodiac) == "What.is.your.favorite.color."] <- "Color"
+colnames(zodiac)[colnames(zodiac) == "What.year.in.university.are.you."] <- "Year"
+colnames(zodiac)[colnames(zodiac) == "What.is.was.your.major...Put.N.A.if.not.applicable."] <- "Major"
+colnames(zodiac)[colnames(zodiac) == "How.old.are.you."] <- "Age"
+colnames(zodiac)[colnames(zodiac) == "How.many.classes.are.you.taking.right.now."] <- "Class_Num"
+colnames(zodiac)[colnames(zodiac) == "How.many.roommates.do.you.currently.have."] <- "Roommate_Num"
+colnames(zodiac)[colnames(zodiac) == "What.is.your.GPA."] <- "GPA"
+colnames(zodiac)[colnames(zodiac) == "What.is.your.Zodiac.sign."] <- "Zodiac"
+colnames(zodiac)[colnames(zodiac) == "Do.you.like.your.major."] <- "Satisfaction"
+colnames(zodiac)[colnames(zodiac) == "How.many.hours.do.you.spend.studying.per.week..on.average.."] <- "Study"
+colnames(zodiac)[colnames(zodiac) == "Do.you.plan.on.going.to.graduate.school."] <- "Grad_School"
+colnames(zodiac)[colnames(zodiac) == "What.is.your.favorite.food."] <- "Food"
+colnames(zodiac)[colnames(zodiac) == "Do.you.have.a.significant.other."] <- "Romance"
+colnames(zodiac)[colnames(zodiac) == "What.is.your.preferred.form.of.exercise."] <- "Exercise"
+colnames(zodiac)[colnames(zodiac) == "If.you.had.to.rank.how.stressed.out.you.have.been.in.2023..what.would.you.rank.it.at...a.3.indicates.moderate.stress."] <- "Stress"
+```
+
+## Recode Color
+```{r}
+colors <- as.factor(zodiac$Color)
+colors <- str_to_lower(colors)
+color.unique <- unique(colors)
+color.unique
+colors[colors == "light blue" | colors == "royal blue" | colors == "indigo" | colors == "turquoise "] <- "blue"
+colors[colors == "dark green" | colors == "teal" | colors == "forest green" | colors == "chartreuse" | colors == "jade green" | colors == "sage green"] <- "green"
+colors[colors == "lavender" | colors == "lilac" | colors == "periwinkle" | colors == "purple "] <- "purple"
+colors[colors == "maroon"] <- "red"
+colors[colors == "fuschia" | colors == "pink "] <- "pink"
+colors
+
+zodiac$Color <- colors
+
+zodiac
+```
+
+## Recode Major
+```{r}
+# all major recoding is based on the UIUC course explorer, with some exceptions where appropriate
+majors <- as.factor(zodiac$Major)
+majors <- str_to_upper(majors)
+majors.unique <- unique(majors)
+majors.unique
+majors
+
+# single majors
+majors[majors == "BRAIN AND COGNITIVE SCIENCE" | majors == "BRAIN AND COGNITIVE SCIEMCE" | majors == "BRAIN & COGNITIVE SCIENCE"] <- "BCOG"
+majors[majors == "PSYCHOLOGY" | majors == "PSYCHOLOGY "] <- "PSYC"
+majors[majors == "COMPUTER ENGINEERING" | majors == "ELECTRICAL ENGINEERING"] <- "ECE"
+majors[majors == "SOCIAL WORK"] <- "SOCW"
+majors[majors == "NUCLEAR, PLASMA, AND RADIOLOGICAL ENGINEERING" | majors == "NUCLEAR"] <- "NPRE"
+majors[majors == "INFORMATION SCIENCES "] <- "IS"
+majors[majors == "I-HEALTH "] <- "IHLT"
+majors[majors == "ANIMAL SCIENCE"] <- "ANSC"
+majors[majors == "BIOENGINEERING"] <- "BIOE"
+majors[majors == "BIOMEDICAL ENGINEERING"] <- "BSE"
+majors[majors == "INTEGRATIVE BIOLOGY "] <- "IB"
+majors[majors == "CHEMICAL ENGINEERING "] <- "CHBE"
+majors[majors == "MOLECULAR AND CELLULAR BIOLOGY "] <- "MCB"
+majors[majors == "COMPUTER SCIENCE" | majors == "COMPUTER SCIENCE "] <- "CS"
+majors[majors == "MECHANICAL ENGINEERING" | majors == "MECHANICAL ENGINEERING "] <- "ME"
+majors[majors == "ENGLISH"] <- "ENGL"
+majors[majors == "POLITICAL SCIENCE "] <- "PS"
+majors[majors == "PUBLIC HEALTH "] <- "CHLH"
+majors[majors == "CIVIL ENGINEERING"] <- "CEE"
+majors[majors == "ATMOSPHERIC SCIENCE"] <- "ATMS"
+majors[majors == "EARTH, SOCIETY, AND ENVIRONMENTAL SCIENCE"] <- "ESE"
+majors[majors == "HUMAN NUTRITION"] <- "FSHN"
+majors[majors == "BIOLOGY" | majors == "BIOLOGY "] <- "BIO"
+majors[majors == "BUSINESS "] <- "BADM"
+majors[majors == "ECONOMICS"] <- "ECON"
+majors[majors == "HISTORY"] <- "HIST"
+majors[majors == "FINANCE"] <- "FIN"
+majors[majors == "KINESIOLOGY"] <- "KIN"
+majors[majors == "JAPANESE "] <- "JAPN"
+majors[majors == "MATERIALS SCIENCE" | majors == "MATERIALS SCIENCE AND ENGINEERING "] <- "MSE"
+majors[majors == "NATURAL RESOURCES AND ENVIRONMENTAL SCIENCE "] <- "NRES"
+majors[majors == "INDUSTRIAL ENGINEERING"] <- "IE"
+majors[majors == "ARCHAEOLOGY "] <- "ARCHAE"
+majors[majors == "INFORMATION MANAGEMENT"] <- "IM"
+majors[majors == "MARKETING"] <- "MARK"
+majors[majors == "NURSING INTENT"] <- "NURS"
+
+
+majors
+# more than one major
+majors[majors == "ECON / PSYCH / DATA SCIENCE"] <- "ECON; PSYC; DS"
+majors[majors == "ENGINEERING PHYSICS AND ATMOSPHERIC SCIENCE"] <- "ENG PHYS; ATMS"
+majors[majors == "ASTROPHYSICS AND PSYCHOLOGY"] <- "ASTR PHYS; PSYC"
+majors[majors == "MECHANICAL ENGINEERING & BUSINESS"] <- "ME; BADM"
+majors[majors == "COMMUNICATION AND MEDIA JOURNALISM "] <- "CMN; JOUR"
+majors[majors == "COMPUTER SCIENCE/DATA SCIENCE" | majors == "COMPUTER SCIENCE, DATA SCIENCE"] <- "CS; DS"
+
+majors
+
+zodiac$Major <- majors
+
+```
+
+## Recoding the GPA values needed
+```{r}
+GPA <- zodiac$GPA
+GPA
+
+GPA[GPA == "5th Amendment"] <- NA
+GPA[GPA == "Around 3.5"] <- 3.5
+GPA[GPA == "8.67"] <- NA
+GPA[GPA == "3.0?"] <- 3.0
+zodiac$GPA <- as.character(GPA)
+
+```
+
+## Recoding Study values needed
+```{r}
+Studious <- zodiac$Study
+
+class(Studious)
+Studious
+Studious <- as.character(Studious)
+
+Studious[Studious == "10 or more"] <- "10+"
+
+zodiac$Study <- Studious
+```
+
+## Writing the new CSV
+```{r}
+write_csv(zodiac, "zodiac_final.csv")
+```
+
+We can now move onto the second part of my project. 

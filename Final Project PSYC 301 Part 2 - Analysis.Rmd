@@ -1,0 +1,316 @@
+---
+title: "Final Project PSYC 301 Part 2 - Analysis"
+author: "Sophie Nikolov"
+date: '2023-04-16'
+output: github_document
+---
+
+## Introduction 
+
+In this second part of my final project, we visit our cleaned data titled 
+'zodiac_final.csv'. 15 questions about basic lifestyle factors were asked to 81 college students or former college students between the ages of 18-25 via a Google Form survey, which was congregated into a Google Sheet. This data contains the following variables:
+
+--------------------------------------------------------------------------------
+ Name                 Description
+ -------------------- ----------------------------------------------------------
+'Time'                Time/Day the survey was filled out
+
+'Color'               Favorite color of the participants
+
+'Year'                Year in school, if applicable
+
+'Major'               Area of study in school, if applicable
+
+'Age'                 Age of the participants
+
+'Class.Num'           Number of classes currently being taken by participants
+
+'Roommate.Num'        Number of roommates participants currently have
+
+'GPA'                 GPA of participants, if applicable
+
+'Zodiac'              Zodiac sign based on the 12 signs of Western astrology
+
+'Satisfaction'        Participant response to whether they like their major
+
+'Study'               How many hours per week participants spend studying
+
+'Grad.School'         If participants plan on going to graduate school (yes/no)
+
+'Food'                Favorite food of the participants
+
+'Romance'             If participants have a current romantic partner (yes/no)
+
+'Exercise'            The preferred form of movement for participants (gym/a
+                      sport/ walking/ i don't exercise)
+
+'Stress'              Response to the question "If you had to rank how stressed 
+                      out you have been in 2023, what would you rank it at?" 
+                      (1- not stressed at all, 3-moderately stressed, 5-extremely stressed)
+--------------------------------------------------------------------------------
+
+The 12 Western zodiac signs are a very popular anthropological phenomenon of self conception. Many people believe in the predictive power of identifying with a particular Zodiac sign, and as such are more likely to believe in specific personality traits that apply to them, weekly horoscopes, and other spiritual practices. By contrast, many people also believe that the Zodiac signs are nothing but pseudoscience, with limited predictive power over most, if not all, facets of life.
+
+I want to explore just how much a Zodiac sign could potentially predict about an average college student, by exploring the various lifestyle questions asked. It is important to note that although my exploration started more generally, examining the descriptive statistics of my data, I eventually chose to focus on GPA as a dependent variable and Zodiac Sign as an independent variable. 
+
+```{r}
+zodiacs <- read.csv("./zodiac_final.csv")
+library(tidyverse)
+```
+
+## Let's Begin
+
+First I want to gather descriptives of the data. I'm particularly interested in which Zodiac signs are most frequent/show up the most. 
+```{r}
+signs <- zodiacs$Zodiac
+class(signs)
+# we need to build a function to test the mode of the Zodiac signs, making sure that we return all the potential modes: looking at the dataset from cleaning as well as in its original Google form, I have suspicions there may be more than one mode. 
+mode <- function(x){
+  special <- unique(x)
+  relate <- tabulate(match(x, special))
+  special[relate == max(relate)]
+}
+mode(signs)
+```
+I'd like to take a look at the means/modes of the existing numeric data.
+```{r}
+roommate <- zodiacs$Roommate.Num
+roommate <- as.numeric(unlist(roommate))
+mean(roommate) # we will round up to 3, as it makes no sense to say someone has 2 and 2/3 of a roommate
+
+stress <- zodiacs$Stress
+mean(stress)
+
+gpa <- zodiacs$GPA
+mean(gpa, na.rm = TRUE) # from cleaning, we know there was a missing value in GPA
+
+age <- zodiacs$Age
+mean(age)
+
+classes <- zodiacs$Class.Num
+classes <- as.character(unlist(classes))
+classes <- recode(classes, "5 or more" = "5", "Not applicable/0" = "0") # for my purposes of finding the mean, I'm recoding it this way
+classes <- as.numeric(classes)
+class(classes)
+mean(classes)
+
+studious <- zodiacs$Study
+studious <- as.character(unlist(studious))
+studious
+mode(studious) # we will use the mode function, as the true mean value would be very difficult to find as the categories are in ranges, so I'd rather just look at how many hours most participants study for. 
+
+major <- zodiacs$Major
+as.character(major)
+mode(major)
+
+exercise <- zodiacs$Exercise
+as.character(exercise)
+mode(exercise)
+
+colors <- zodiacs$Color
+as.character(colors)
+mode(colors)
+```
+As we can see from a quick overview of our dataset, the most frequently occurring Zodiac signs are Pisces, Aries, and Sagittarius. Looking at averages, my participants have ~3 roommates, have moderate stress levels at around 3.48/5, have GPAs around 3.52, are on average between 20-21 years old, are currently taking around 4 classes, and most frequently study 10 hours or more per week. The most frequent major is the psychology major, the most common favorite color is green, and the most common way people exercise is both the gym and walking. 
+
+Reaching our point of focus, my main question I want to ask is whether a particular Zodiac sign predicts GPA and stress levels. I'd like to start by running basic linear regression models, to see if this type of model will be appropriate for my data, using Zodiac sign as the predictors and stress/GPA as outcomes. 
+```{r}
+stress <- zodiacs$Stress
+
+signxstress <- lm(stress ~ signs, data = zodiacs)
+summary(signxstress)
+
+gpa <- zodiacs$GPA
+
+signxgpa <- lm(gpa ~ signs, data = zodiacs)
+summary(signxgpa)
+```
+
+We can see with both of these generated basic linear regressions, firstly, that Aquarius was the Zodiac sign chosen to anchor these models. We have potentially interesting findings from these basic linear regressions. 
+
+Beginning with stress levels, the significance in the model provided is that there are significant differences in stress levels between Aquarius and Aries, as after Aquarius, Aries is the first level of the factor variable category of Zodiac signs. Other than this finding, we see no significance reported elsewhere, and a correlation coefficient of 0.1607 with its adjusted value as 0.02689 (very weak). 
+
+The more potentially interesting model comes from looking at Zodiac sign with GPA. As previously, there is significance in comparing GPA between Aquarius and Aries, but this time there is also significance in the regression coefficients for Gemini, Libra, and Scorpio. In theory, this tells us that there is a significant difference in GPA between those who are Geminis, Libras, and Scorpios and Aquarius, and since the coefficients are all positive this should in theory mean that these signs are associated with a higher predictive GPA. The correlation coefficient is 0.2467, and when adjusted is 0.123, which is still quite a weak correlation coefficient. 
+
+Entertaining this significance for a moment, it could make sense specifically why Libras and Scorpios might potentially have a higher predictive GPA. With Libra being the period of mid-late September to mid-late October, and Scorpio following from mid-late October to mid-late November, this corresponds to a fresh academic fall semester following a summer break for this sample of mostly university age students. It could be that this period of time stimulates more academic focus. However, this logic doesn't explain the significance for Geminis (mid-late May to mid-late June). 
+
+We must keep in mind though that the statistical significance found for these three Zodiac signs doesn't necessarily imply any practical significance. Though I tried to think of a practical explanation, we must take these findings with a grain of salt: there could be confounds I haven't thought of. 
+
+With all this in mind, I'd now like to visualize these basic regression models.
+
+## Visualizing the regression models
+```{r}
+ggplot(data = zodiacs, aes(x = Zodiac, y = Stress)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", formula = y ~ x) + 
+  labs(title = "Linear Regression Model of Zodiac Sign to Stress")
+
+ggplot(data = zodiacs, aes(x = Zodiac, y = GPA)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", formula = y ~ x) +
+  labs(title = "Linear Regression Model of Zodiac Sign to GPA")
+```
+Looking at stress and Zodiac sign, we can see that individual datapoints are quite clumped together, and it's not immediately clear how many of each Zodiac sign responded to specific stress levels. We can also see upon looking at our visualization that stress levels may not correlate at all with Zodiac sign. If we look at GPA however, we don't see the same overlap in data points, and we can see that perhaps there is a potential quadratic relationship between GPA and Zodiac sign. We will shift our efforts going forward to the relationship of GPA and Zodiac sign. 
+
+I'd like to attempt looking at a quadratic relationship between GPA and Zodiac sign.
+```{r}
+# we want to break down the factor variable of zodiac sign into recoding it as numeric. a note that im not doing this as exact. I know there is overlap between months of zodiac signs, as they typically go from around the 20th-21st of each month to the following month. but for the purposes of having a system of organization, the following grouping is just a rough estimate.
+signs2 <- as.character(signs)
+signs2[signs2 == "Aquarius"] <- "1"
+signs2[signs2 == "Pisces"] <- "2"
+signs2[signs2 == "Aries"] <- "3"
+signs2[signs2 == "Taurus"] <- "4"
+signs2[signs2 == "Gemini"] <- "5"
+signs2[signs2 == "Cancer"] <- "6"
+signs2[signs2 == "Leo"] <- "7"
+signs2[signs2 == "Virgo"] <- "8"
+signs2[signs2 == "Libra"] <- "9"
+signs2[signs2 == "Scorpio"] <- "10"
+signs2[signs2 == "Sagittarius"] <- "11"
+signs2[signs2 == "Capricorn"] <- "12"
+signs2 <- as.numeric(signs2)
+
+#we have a numeric variable for sign now. id like to now try to run the quadratic model
+signs_sq <- signs2^2
+signxgpa_quad <- lm(gpa ~ signs + signs_sq, data = zodiacs, na.rm = TRUE)
+summary(signxgpa_quad)
+
+# plotting
+ggplot(zodiacs, aes(x = signs2, y = gpa)) + 
+  geom_point() + 
+  stat_smooth(method = "lm", formula = y ~ x + I(x^2), color = "blue") + 
+  labs(x = "Zodiac Sign", y = "GPA", title = "Quadratic Regression of Zodiac Sign on GPA: Numeric")
+```
+As we can see, the visualization is slightly better represented with a quadratic visualization. We can see a very slight curve now that we've recoded Zodiac signs numerically. We follow an inverted, shallow U shaped curve that hovers between ~ a little under 3.5 to ~ 3.75. The trough of the curve sits at around months 5-8, or from Gemini through Leo, before it begins to curve back up. 
+
+Another visualization I'd like to see is grouping seasons by GPA and coloring each datapoint by zodiac sign. 
+```{r}
+# grouping into seasons for another visualization
+zodiacs <- zodiacs %>%
+  mutate(season = case_when(signs %in% c("Aries", "Taurus", "Gemini") ~ "Spring",
+                   signs %in% c("Cancer", "Leo", "Virgo") ~ "Summer",
+                   signs %in% c("Libra", "Scorpio", "Sagittarius") ~ "Fall",
+                   signs %in% c("Capricorn", "Aquarius", "Pisces") ~ "Winter"))
+
+zodiac_palette <- c("Aries" = "#EB96EB", "Taurus" = "#FF598F", "Gemini" = "#B54C17", "Cancer" = "#50B4D8", "Leo" = "#FF5733", "Virgo" = "#C74444", "Libra" = "#0E6655", "Scorpio" = "#7B4D70", "Sagittarius" = "#4B0082", "Capricorn" = "#FFD700", "Aquarius" = "#3A539B", "Pisces" = "#6B8E23") 
+
+ggplot(zodiacs, aes(x = season, y = GPA, color = signs)) + geom_point() + scale_color_manual(values = zodiac_palette) + labs(x = "Season", title = "Season x GPA, Colored by Zodiac Sign")
+
+```
+This visual doesn't necessarily tell us much, but we do make a note that the spread of the datapoints in spring and fall is larger than that of summer and winter. 
+
+I'd like to explore adding seasons as a predictor for the outcome of GPA along with zodiac sign. 
+```{r}
+# attempting multiple regression
+seasons <- zodiacs$season
+signxseasonxgpa <- lm(gpa ~ signs + seasons, data = zodiacs)
+summary(signxseasonxgpa)
+
+# from earlier, we have our signs2 vector to represent the zodiac signs recoded numerically. now that we're adding our seasons grouping, I'd like to recode them as 0-11 so that all the winter signs (capricorn, aquarius, pisces) appear in the same area. 
+signs2 <- as.character(signs)
+signs2[signs2 == "Aquarius"] <- "1"
+signs2[signs2 == "Pisces"] <- "2"
+signs2[signs2 == "Aries"] <- "3"
+signs2[signs2 == "Taurus"] <- "4"
+signs2[signs2 == "Gemini"] <- "5"
+signs2[signs2 == "Cancer"] <- "6"
+signs2[signs2 == "Leo"] <- "7"
+signs2[signs2 == "Virgo"] <- "8"
+signs2[signs2 == "Libra"] <- "9"
+signs2[signs2 == "Scorpio"] <- "10"
+signs2[signs2 == "Sagittarius"] <- "11"
+signs2[signs2 == "Capricorn"] <- "0"
+signs2 <- as.numeric(signs2)
+
+# plotting it
+ggplot(zodiacs, aes(x = signs2, y = gpa, color = seasons)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", formula = y ~ x) + 
+  labs(x = "Zodiac Sign", y = "GPA", title = "Zodiac Sign & Season x GPA")
+```
+We can see this model is a bit more clear to read. We can see that in the winter, spring, and summer groups, there is an overall decrease in GPA prediction as the months progress. Between spring and summer, there is a bit of a jump, and fall is the only season that displays an increase in predicted GPA. 
+
+I'd like to make a heat map, where each sign is grouped by their season, to see if the spread of GPA can be better visualized within a season.
+
+## Heat Map
+```{r}
+# filtering out the missing zodiac sign GPAs and ordering it beginning with spring
+zodiacs_full <- zodiacs[, c("GPA", "Zodiac", "season")] %>% filter(!is.na(GPA)) %>%
+  mutate(Zodiac = ordered(Zodiac,
+                                 levels = c("Aries", "Taurus", "Gemini",
+                                            "Cancer", "Leo", "Virgo",
+                                            "Libra", "Scorpio", "Sagittarius",
+                                            "Capricorn", "Aquarius", "Pisces"),
+                                 labels = c("Aries", "Taurus", "Gemini",
+                                            "Cancer", "Leo", "Virgo",
+                                            "Libra", "Scorpio", "Sagittarius",
+                                            "Capricorn", "Aquarius", "Pisces")),
+         season = ordered(season,
+                                 levels = c("Spring", "Summer", "Fall", "Winter"),
+                                 labels = c("Spring", "Summer", "Fall", "Winter"))
+         )
+
+ggplot(zodiacs_full, aes(x = season, y = Zodiac, fill = GPA)) + 
+  geom_tile() + 
+  scale_fill_gradient(low = "white", high = "red" , limits = c(2.0, 4.0)) +
+  labs(x = "Season", y = "Zodiac Sign", title = "Heat Map of Zodiac Sign GPAs categorized by Seasons")
+```
+From my heat map, we gather that interestingly, the Zodiac signs born in summer and winter have the bulk of the higher GPA scores, with winter signs overall performing the highest. We probably could have guessed this because of my earlier visualization titled "Season x GPA, Colored by Zodiac Sign" because of the spread of GPA range of Fall and Spring compared to Summer and Winter. 
+
+When we take a glance at all the visualizations, it's very interesting to remark that overall, the predicted signs of Libra, Gemini, and Scorpio as having potentially higher predictive GPAs comparatively to the Aquarius sign doesn't seem to hold up. Looking at the heat map and the quadratic regression, it especially looks as though Libra and Gemini are the exact opposite of what was predicted by the model.
+
+We have to acknowledge the limitations of using a linear regression model for these comparisons. We don't see a pattern where the data is linear, nor do we really see that it's normally distributed. We also don't really see homoscedasticity across all the zodiac signs. My main motivation for my choice in linear regression was that it was a major course concept, so as such we cannot determine that these findings are very significant in a practical context. 
+
+## Monte Carlo simulation for GPA
+
+I want to run a Monte Carlo simulation to identify the probability of a Cancer getting a 4.0 GPA. I'm asking this mainly because I'm a Cancer, so I'm a bit biased in asking for the probability of my sign getting a 4.0 GPA when we simulate a large number of scenarios. 
+```{r}
+season <- zodiacs$season
+# i need it to be reproducable, so i'm setting a seed here. 
+set.seed(231)
+
+# number of simulations i want
+n_sim <- 1000
+
+# I want a function to simulate GPA, which involves random season per sign and random GPA generation per season
+sim_gpa <- function(signs){
+  szn <- sample(zodiacs$season[zodiacs$Zodiac == signs], 1)
+  g.p.a <- rnorm(1, mean = mean(zodiacs$GPA[zodiacs$season == season], na.rm = TRUE), sd = sd(zodiacs$GPA[zodiacs$season == season], na.rm = TRUE))
+  return(g.p.a)
+}
+
+# making a vector for the results
+result <- rep(NA, n_sim)
+# simulated GPA for Cancers
+for (i in 1:n_sim){
+  result[i] <- sim_gpa("Cancer")
+}
+
+# probability of getting a 4.0
+prob_4.0 <- sum(result >= 4) / n_sim
+prob_4.0
+```
+
+The probability of a Cancer getting a 4.0 GPA when run in my simulation 1000 times is 10.8 %. What about if we change the number of simulations to 10,000?
+
+```{r}
+n_sim <- 10000
+
+result <- rep(NA, n_sim)
+for (i in 1:n_sim){
+  result[i] <- sim_gpa("Cancer")
+}
+
+# probability of getting a 4.0
+prob_4.0 <- sum(result >= 4) / n_sim
+prob_4.0
+
+table(zodiacs$Zodiac)["Cancer"]
+```
+The probability of a Cancer getting a 4.0 GPA when run in my simulation 10,000 times is 9.16%. 
+
+Originally, I was excited about this finding because I thought we would expect the probability that each sign gets a 4.0 GPA in the simulation to be closer to 8.3% as n increases. We have to remember though that the difference between 10.8% and 8.3% or 9.16% to 8.3% may just be a result of random variation, and may not indicate anything significant. While it is an important assumption to acknowledge that we assumed GPA would be independent of Zodiac sign, it is also important to acknowledge that the Monte Carlo simulation I ran involves, for the purpose of generating random values, assuming a normal distribution of GPAs for Zodiac sign. It is unlikely that our distribution of GPAs for zodiac signs follows a normal distribution, as we have seen with our visualizations. 
+
+In summary, my project was a fun take on playing with the idea that Zodiac signs presented a predictability that many don't agree with, specifically on GPA of college students. Overall I find that for practical purposes, there is not anything significant we may be able to interpret in the large context of the debate between zodiac signs and how much they tell us about an individual. While there were some technically significant findings and some cool visualizations, we must always remember the assumptions that come with these tests. I conclude with saying that the general public should be mindful of the predictability of Zodiac signs to their life. 
+
+
